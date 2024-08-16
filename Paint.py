@@ -7,10 +7,13 @@ mp_hands = mp.solutions.hands
 mp_drawing = mp.solutions.drawing_utils
 hands = mp_hands.Hands(max_num_hands=1, min_detection_confidence=0.7)
 
-# Drawing colors (blue, green, red, yellow, purple) and eraser (black)
+# Drawing colors and their names
 colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (0, 255, 255), (255, 0, 255)]
+color_names = ['Blue', 'Green', 'Red', 'Yellow', 'Purple']
 eraser_color = (0, 0, 0)
+eraser_name = 'Eraser'
 current_color = colors[0]
+current_color_name = color_names[0]
 drawing = False
 erasing = False
 prev_pos = None  # Store the previous position for drawing smooth lines
@@ -24,17 +27,19 @@ def get_finger_tip_position(hand_landmarks, idx):
     return int(hand_landmarks.landmark[idx].x * 640), int(hand_landmarks.landmark[idx].y * 480)
 
 def select_color(x, y):
-    global current_color, erasing
+    global current_color, current_color_name, erasing
     # Assuming the top left 5 squares (50x50 each) contain color options
     if y < 50:
         erasing = False  # Stop erasing when selecting a color
         for i in range(5):
             if 50 * i < x < 50 * (i + 1):
                 current_color = colors[i]
+                current_color_name = color_names[i]
     # Check if the user selects the eraser (assuming it's in the 6th position)
     if y < 50 and 250 < x < 300:
         erasing = True
         current_color = eraser_color
+        current_color_name = eraser_name
 
 cap = cv2.VideoCapture(1)
 
@@ -90,10 +95,12 @@ while cap.isOpened():
     # Draw color selection bar and eraser
     for i, color in enumerate(colors):
         cv2.rectangle(frame, (50 * i, 0), (50 * (i + 1), 50), color, -1)
+        cv2.putText(frame, color_names[i], (50 * i + 5, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
     cv2.rectangle(frame, (250, 0), (300, 50), (200, 200, 200), -1)  # Eraser option (gray rectangle)
+    cv2.putText(frame, 'Eraser', (255, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
 
     # Show current color and thickness
-    cv2.putText(frame, f'Color: {current_color}', (10, 470), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+    cv2.putText(frame, f'Color: {current_color_name}', (10, 470), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
     cv2.putText(frame, f'Drawing Thickness: {drawing_thickness}px', (10, 440), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
     cv2.putText(frame, f'Eraser Thickness: {eraser_thickness}px', (10, 410), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
 
